@@ -1,0 +1,226 @@
+﻿<html>
+<head>
+    <title>3FTPd Console</title>
+    <link type="text/css" href="css/pepper-grinder/jquery-ui-1.8.9.custom.css" rel="stylesheet" />
+    <link type="text/css" href="css/table.css" rel="stylesheet" />
+    <link href="css/style.css" rel="stylesheet" type="text/css" />
+    <script type="text/javascript" src="js/jquery-1.4.4.min.js"></script>
+    <script type="text/javascript" src="js/jquery-ui-1.8.9.custom.min.js"></script>
+    <script type="text/javascript" src="js/jquery.tmpl.js"></script>
+    <script type="text/javascript" src="js/jquery.json-2.2.min.js"></script>
+    <script type="text/javascript" src="js/jquery.dataTables.js"></script>
+    <script type="text/javascript" src="js/actions.js"></script>
+    <script type="text/javascript" src="js/setup.js"></script>
+    <script type="text/javascript">
+        $(function () { setup(); });
+    </script>
+</head>
+<body>
+    <script id="users_template" type="text/html">
+        <tr>
+            <td> {{= username }} </td> 
+            <td class="button ui-state-default" onClick="editUser('{{= id }}');">edit</td>
+            <td class="button ui-state-default" onClick="changePassword('{{= id }}');">change password</td>
+            <td class="button ui-state-default" onClick="deleteUser('{{= id }}');">delete</td>
+        </tr>
+    </script>
+    <script id="connections_template" type="text/html">
+        <tr>
+            <td> {{= username }} </td>
+            <td> {{= connectionTime }} </td>
+            <td> {{= ipAddress }} </td>
+            <td> {{= lastCommand }} </td>
+            <td class="button ui-state-default" onClick="kill('{{= pid }}');">kill</td>
+            <td class="button ui-state-default" onClick="killAll('{{= pid }}');">kill all</td>
+        </tr>
+    </script>
+    <script id="sites_template" type="text/html">
+        <tr>
+            <td> {{= name }} </td> 
+            <td> {{= ipaddress }} </td>
+            <td> {{= status }} </td>
+            <td class="button ui-state-default" onClick="opSite('{{= actionName(status) }}','{{= id }}');">{{= actionName(status) }}</td>
+            <td class="button ui-state-default" onClick="deleteSite('{{= id }}');">delete</td>
+        </tr>
+    </script>
+    <div id="tabs">
+        <ul>
+            <li><a href="#panel-dashboard">Dashboard</a></li>
+            <li><a href="#panel-sites">Sites</a></li>
+            <li><a href="#panel-users">Users</a></li>
+            <li><a href="#panel-configuration">Configuration</a></li>
+        </ul>
+        <div id="panel-dashboard">
+            <span id="refresh-button-dashboard">Refresh</span>
+            <!-- data grid -->
+            <div>
+                <table id="connections" class="display">
+                    <thead>
+                        <tr>
+                            <th>
+                                username
+                            </th>
+                            <th>
+                                time
+                            </th>
+                            <th>
+                                ip address
+                            </th>
+                            <th>
+                                last command
+                            </th>
+                            <th>
+                            </th>
+                            <th>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="connections_grid">
+                    </tbody>
+                </table>
+            </div>
+            <br />
+            <span>Server Uptime:</span> <span id="uptime"></span> <span>seconds, </span><span
+                id="numberOfProcesses"></span> <span>clients logged in.</span>
+        </div>
+        <div id="create-site" style="clear: both;">
+            <fieldset>
+                <label>
+                    Name</label><input type="text" id="siteName" value="" class="text ui-widget-content ui-corner-all" />
+                <label>
+                    Ip Address</label><input type="text" id="ipaddress" value="" class="text ui-widget-content ui-corner-all"/>
+                
+                <div class="clear">
+                </div>
+            </fieldset>
+        </div>
+        <div id="panel-sites">
+            <span id="create-site-button">Create Site</span>
+            <div>
+                <table id="sites" class="display">
+                    <thead>
+                        <tr>
+                            <th>
+                                name
+                            </th>
+                            <th>
+                                ip address
+                            </th>
+                            <th>
+                                status
+                            </th>
+                            <th>
+                            </th>
+                            <th>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="sites_grid">
+                    </tbody>
+                </table>
+            </div>
+            <br />
+        </div>
+        <div id="create-user" style="clear: both;">
+            <fieldset>
+                <label>
+                    Username</label><input type="text" id="username" value="" />
+                <label>
+                    Password</label><input type="password" id="password" value="" />
+                <label>
+                    Home Directory</label><input type="text" id="homeDirectory" value="" />
+                    
+                <div class="clear">
+                </div>
+            </fieldset>
+        </div>
+        <div id="edit-user" style="clear: both;">
+            <fieldset>
+                <label>
+                    Username</label><input type="text" id="edit-user-username" value="" disabled="disabled" class="text ui-widget-content ui-corner-all"/>
+                <label>
+                    Home Directory</label><input type="text" id="edit-user-homeDirectory" value="" class="text ui-widget-content ui-corner-all"/>
+                    
+                <div class="clear">
+                </div>
+            </fieldset>
+        </div>
+        <div id="change-password-user" style="clear: both;">
+            <fieldset>
+                <label>
+                    Username</label><input type="text" id="change-password-user-username" value="" disabled="disabled" class="text ui-widget-content ui-corner-all"/>
+                <label>
+                    Password</label><input type="password" id="change-password-password" value="" class="text ui-widget-content ui-corner-all"/>
+                <label>
+                    Retype Password</label><input type="password" id="retypePassword" value="" class="text ui-widget-content ui-corner-all"/>
+                    
+                <div class="clear">
+                </div>
+            </fieldset>
+        </div>
+        <div id="panel-users">
+            <span id="create-user-button">Create User</span>
+            <div>
+                <table id="users" class="display">
+                    <thead>
+                        <tr>
+                            <th>
+                                Name
+                            </th>
+                            <th>
+                            </th>
+                            <th>
+                            </th>
+                            <th>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="users_grid">
+                    </tbody>
+                </table>
+            </div>
+            <br />
+        </div>
+        <div id="panel-configuration">
+            <div>
+            <div>
+                <h3>Administrator Password</h3>
+                <fieldset>
+                    <label>
+                        Password</label><input type="password" id="adminPassword" value="" class="text ui-widget-content ui-corner-all"/>
+                    <label>
+                        Retype Password</label><input type="password" id="adminPassword1" value="" class="text ui-widget-content ui-corner-all"/>
+                    <span id="update-admin-submit" >Update</span>
+                    
+                </fieldset>
+                </div>
+                <!--
+                    <p class="small ui-state-highlight" style="margin: 5px;">* leave empty if don't want to change the current password.</p>
+                    -->
+                <!-- -->
+                <div>
+                <h3>Anonymous Access</h3>
+                <fieldset>
+                    
+                    <label>Enabled</label><input type="checkbox" id="anonymousAccessEnabled" value="1" class="text ui-widget-content ui-corner-all"/>
+                    <div class="clear"></div>
+                    <span id="update-anon-submit">Update</span>
+                    
+                </fieldset>
+                </div>
+               
+            </div>
+        </div>
+    </div>
+    <br />
+    <div class="ui-widget">
+        Copyright &copy; 2010 - 2011 <a href="http://www.codemaker.net/">Code Maker Inc.</a>
+        All Rights Reserved.</div>
+    <div id="dialog-confirm" title="Delete user?">
+        <p>
+            <span class="ui-icon ui-icon-alert" style="float: left; margin: 0 7px 20px 0;"></span>
+            <span id="dialog-confirm-text">Are you sure you want to delete this item?</span>
+        </p>
+    </div>
+</body>
+</html>
