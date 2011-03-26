@@ -1,0 +1,12 @@
+3FTPd - The Fast Fsharp FTP Daemon
+
+Features
+
+- Lightweight highly performance non-blocking FTP server. Designed from the ground up using asynchronous IO.
+- Secure FTP (SFTP)
+- MODE Z
+- IPv6
+- Web-based management console.
+- REST API
+- Minimalistic approach and easy of configuration.
+- Embeddable
