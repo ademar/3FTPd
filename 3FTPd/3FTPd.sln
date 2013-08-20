@@ -1,11 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{4925A630-B079-445d-BCD4-3A9C94FE9307}") = "3FTPd", "3FTPd.fsproj", "{58D6D2CA-34EF-43BF-B320-2D43686B64DA}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "3FTPd", "3FTPd.fsproj", "{58D6D2CA-34EF-43BF-B320-2D43686B64DA}"
 EndProject
-Project("{4925A630-B079-445d-BCD4-3A9C94FE9307}") = "3FTPLib", "..\3FTPLib\3FTPLib.fsproj", "{333C085B-568F-402D-9627-5025C5766269}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zlib DLL", "..\..\Zlib\Zlib DLL.csproj", "{9816BA86-9250-4C00-A912-25F07F8677D1}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "3FTPLib", "..\3FTPLib\3FTPLib.fsproj", "{333C085B-568F-402D-9627-5025C5766269}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,6 +15,16 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{58D6D2CA-34EF-43BF-B320-2D43686B64DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58D6D2CA-34EF-43BF-B320-2D43686B64DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58D6D2CA-34EF-43BF-B320-2D43686B64DA}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{58D6D2CA-34EF-43BF-B320-2D43686B64DA}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{58D6D2CA-34EF-43BF-B320-2D43686B64DA}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{58D6D2CA-34EF-43BF-B320-2D43686B64DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58D6D2CA-34EF-43BF-B320-2D43686B64DA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{58D6D2CA-34EF-43BF-B320-2D43686B64DA}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{58D6D2CA-34EF-43BF-B320-2D43686B64DA}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{58D6D2CA-34EF-43BF-B320-2D43686B64DA}.Release|x86.ActiveCfg = Release|Any CPU
 		{333C085B-568F-402D-9627-5025C5766269}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{333C085B-568F-402D-9627-5025C5766269}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{333C085B-568F-402D-9627-5025C5766269}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
@@ -29,33 +37,11 @@ Global
 		{333C085B-568F-402D-9627-5025C5766269}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{333C085B-568F-402D-9627-5025C5766269}.Release|x86.ActiveCfg = Release|Any CPU
 		{333C085B-568F-402D-9627-5025C5766269}.Release|x86.Build.0 = Release|Any CPU
-		{58D6D2CA-34EF-43BF-B320-2D43686B64DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{58D6D2CA-34EF-43BF-B320-2D43686B64DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{58D6D2CA-34EF-43BF-B320-2D43686B64DA}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{58D6D2CA-34EF-43BF-B320-2D43686B64DA}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{58D6D2CA-34EF-43BF-B320-2D43686B64DA}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{58D6D2CA-34EF-43BF-B320-2D43686B64DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{58D6D2CA-34EF-43BF-B320-2D43686B64DA}.Release|Any CPU.Build.0 = Release|Any CPU
-		{58D6D2CA-34EF-43BF-B320-2D43686B64DA}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{58D6D2CA-34EF-43BF-B320-2D43686B64DA}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{58D6D2CA-34EF-43BF-B320-2D43686B64DA}.Release|x86.ActiveCfg = Release|Any CPU
-		{9816BA86-9250-4C00-A912-25F07F8677D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9816BA86-9250-4C00-A912-25F07F8677D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9816BA86-9250-4C00-A912-25F07F8677D1}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{9816BA86-9250-4C00-A912-25F07F8677D1}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{9816BA86-9250-4C00-A912-25F07F8677D1}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{9816BA86-9250-4C00-A912-25F07F8677D1}.Debug|x86.Build.0 = Debug|Any CPU
-		{9816BA86-9250-4C00-A912-25F07F8677D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9816BA86-9250-4C00-A912-25F07F8677D1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9816BA86-9250-4C00-A912-25F07F8677D1}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{9816BA86-9250-4C00-A912-25F07F8677D1}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{9816BA86-9250-4C00-A912-25F07F8677D1}.Release|x86.ActiveCfg = Release|Any CPU
-		{9816BA86-9250-4C00-A912-25F07F8677D1}.Release|x86.Build.0 = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(MonoDevelopProperties) = preSolution
-		StartupItem = 3FTPd.fsproj
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		StartupItem = 3FTPd.fsproj
 	EndGlobalSection
 EndGlobal
