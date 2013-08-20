@@ -14,7 +14,7 @@ open System.Security.Cryptography.X509Certificates;
 open System.Net.Security
 
 open Common
-open Config 
+//open Config 
 
 open Suave.Log
 
@@ -44,7 +44,7 @@ open Ionic.Zlib
 
 type Direction = Up | Down
 
-let on_data_channel (client:FtpClient) (operation:Stream -> unit) (d:Direction)= async {
+let on_data_channel (client:FtpClient) (operation:Stream -> unit) (d:Direction) (serverCertificate)= async {
 
     if(client.Passive) then
         log "client is passive, waiting on %d port" client.Port
@@ -124,16 +124,16 @@ let DELE (path:string) (client: FtpClient)  = async {
     |_ -> do! async_writeln (client.ControlStream) "500 Internal server error."
 }
 
-let LIST (client: FtpClient) = async {
+let LIST (client: FtpClient) serverCertificate = async {
     if dir_exists client.CurrentDirectory client then
         do! async_writeln (client.ControlStream) "150 Here comes the directory listing."
-        do! on_data_channel client (fun x -> write x (dir1 (client.CurrentDirectory) client)) Up
+        do! on_data_channel client (fun x -> write x (dir1 (client.CurrentDirectory) client)) Up serverCertificate
     else do! async_writeln (client.ControlStream) "550 Directory does not exists."
 }
 
-let NLIST (client: FtpClient) = async {
+let NLIST (client: FtpClient) serverCertificate = async {
     do! async_writeln (client.ControlStream) "150 Here comes the directory listing."
-    do! on_data_channel client (fun x -> write x (dir2 (client.CurrentDirectory) client)) Up
+    do! on_data_channel client (fun x -> write x (dir2 (client.CurrentDirectory) client)) Up serverCertificate
 }
 
 let MDTM (path:string) (client: FtpClient) = async {
@@ -216,7 +216,7 @@ let EPRT (port:string) (client: FtpClient) = async {
          log "PORT failed: %A" x
 }
 
-let RETR (path:string) (client: FtpClient) = async {
+let RETR (path:string) (client: FtpClient) serverCertificate = async {
 
     let filePath = getPath path client
 
@@ -228,7 +228,7 @@ let RETR (path:string) (client: FtpClient) = async {
             
                 log "retrieving: %s" filePath
                 use fileStream = new FileStream(filePath,FileMode.Open,FileAccess.Read,FileShare.Read)  
-                copy fileStream x  ) Up
+                copy fileStream x  ) Up serverCertificate
     else
         do! async_writeln (client.ControlStream) "550 File does not exists."
 }
@@ -268,15 +268,15 @@ let RMD (path:string) (client: FtpClient)  = async {
     |_ -> do! async_writeln (client.ControlStream) "500 Internal server error."
 }
 
-let store1 path client = 
+let store1 path client serverCertificate = 
     on_data_channel client (fun x -> 
             
             let filePath = getPath path client
             log "storing: %s" filePath
             
-            store filePath x) Down
+            store filePath x) Down serverCertificate
 
-let STOR (path:string) (client: FtpClient)  = async {
+let STOR (path:string) (client: FtpClient) serverCertificate = async {
 
     do! async_writeln (client.ControlStream) "125 Data connection already open; Transfer starting."
     
@@ -292,7 +292,7 @@ let STOR (path:string) (client: FtpClient)  = async {
             cancellation_token*)
             
             
-    Async.Start ((store1 path client),cancellation_token_source.Token)
+    Async.Start ((store1 path client serverCertificate),cancellation_token_source.Token)
  
     client.CancellationTokenSource <- cancellation_token_source
     

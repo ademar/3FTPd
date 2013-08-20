@@ -21,7 +21,7 @@ let numberOfProcesses _ = clients.Values.Count
 
 let processes_data _ = (toJson<HomeModel>({ uptime = uptime (); numberOfProcesses = numberOfProcesses () ; processes = processes () }))
 
-open Data
+//open Data
 open System
 open System.Threading
 
@@ -36,11 +36,6 @@ let status siteid =
         "running"
     else
         "stopped"
-
-let site_status _ = 
-    sites () |> Array.map (fun x -> { x with status = status (x.id)} )
-
-let sites_data _ = (toJson<Site array>(site_status ()))
 
 let extractIp ep = ep.ToString().Split(':').[0]
 
@@ -62,23 +57,14 @@ let stop (siteId:Guid) =
     |> Seq.filter ( fun x -> (extractIp x.TcpClient.Client.RemoteEndPoint).Equals(s.site.ipaddress))
     |> Seq.iter( fun x -> kill x.Id)
     
-let start (site:Site) =
+let start (site:Site) serverCertificate authentication_provider =
     
     log "starting site:%s" site.name
     let cancellationSource = new CancellationTokenSource()
      
-    Async.Start(ftp_server site.ipaddress, cancellationSource.Token)
+    Async.Start(ftp_server site.ipaddress serverCertificate authentication_provider, cancellationSource.Token)
     
     runningSites <- Map.add site.id { site = site; cancellationSource =  cancellationSource} runningSites
-
-let siteCommand (command:Command) = 
-    
-    match command.command.ToLower() with
-    | "stop"    -> stop command.id
-    | "start"   -> match site command.id with
-                    |Some(site) -> start site
-                    |_ -> ()
-    |_ -> ()
 
 let kill (con:Id) = Common.kill con.id
 

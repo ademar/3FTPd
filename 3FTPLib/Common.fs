@@ -289,15 +289,29 @@ let stream (client:TcpClient) = client.GetStream()
 
 let lift2 f = fun b c -> fun a -> f (b a) (c a) 
 
+let combine (p1:string) (p2:string) =
+    let p2 = if p2.StartsWith("/") then p2.Substring(1) else p2
+    let path = Path.Combine(p1,p2)
+    printfn "HERE:   %s##%s##%s" p1 p2 (path.ToString())
+    path.ToString()
+
 let dir_exists arg (client:FtpClient) = 
-    let dir = new DirectoryInfo(client.HomeDirectory + arg)
+    let path = combine client.HomeDirectory arg
+    //let dir = new DirectoryInfo(client.HomeDirectory + arg)
+    Console.WriteLine(path)
+    let dir = new DirectoryInfo(path)
+    
     dir.Exists
     
 let dir1 (arg:string) (client:FtpClient) = 
+    
     let result = new StringBuilder()
 
-    let arg' = arg.Replace("/","\\")
-    let dir = new DirectoryInfo(client.HomeDirectory + arg)
+    //let arg' = arg.Replace("/","\\")
+    
+    let path = combine client.HomeDirectory arg 
+    
+    let dir = new DirectoryInfo(path)
        
     let filesize  (x:FileSystemInfo) =  
         if (x.Attributes ||| FileAttributes.Directory =  FileAttributes.Directory) then 

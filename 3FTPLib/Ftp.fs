@@ -68,7 +68,7 @@ let set_acl (username:string) (dir: DirectoryInfo) =
 
 open Commands
 
-let command(str1: string, client: FtpClient) = async {
+let command(str1: string, client: FtpClient) serverCertificate = async {
 
     let stream = client.ControlStream
     
@@ -114,7 +114,7 @@ let command(str1: string, client: FtpClient) = async {
     //If remote-filespec refers to a file, sends information about that file. 
     //If remote-filespec refers to a directory, sends information about each file in that directory. remote-filespec defaults to the current directory. 
     //This command must be preceded by a PORT or PASV command.
-    |"LIST" ->  do! LIST client
+    |"LIST" ->  do! LIST client serverCertificate
     //|"LPRT" -> ()
     //|"LPSV" -> ()
     //Syntax: MDTM remote-filename
@@ -132,7 +132,7 @@ let command(str1: string, client: FtpClient) = async {
                 do! async_writeln stream "200 MODE Z ok."
     //Syntax: NLST [remote-directory]
     //Returns a list of filenames in the given directory (defaulting to the current directory), with no other information. Must be preceded by a PORT or PASV command.
-    |"NLST" -> do! NLIST client
+    |"NLST" -> do! NLIST client serverCertificate
     //Syntax: NOOP
     //Does nothing except return a response.
     |"NOOP" -> do! async_writeln stream "200 NOOP ok."
@@ -164,7 +164,7 @@ let command(str1: string, client: FtpClient) = async {
     //|"REST" -> ()
     //Syntax: RETR remote-filename
     //Begins transmission of a file from the remote host. Must be preceded by either a PORT command or a PASV command to indicate where the server should send data.
-    |"RETR" ->  do! RETR arguments client
+    |"RETR" ->  do! RETR arguments client serverCertificate
     //Syntax: RMD remote-directory
     //Deletes the named directory on the remote host.
     |"RMD" |"XRMD"  -> do! RMD arguments client
@@ -182,7 +182,7 @@ let command(str1: string, client: FtpClient) = async {
     //|"STAT" -> ()
     //Syntax: STOR remote-filename
     //Begins transmission of a file to the remote site. Must be preceded by either a PORT command or a PASV command so the server knows where to accept data from.
-    |"STOR" ->  do! STOR arguments client
+    |"STOR" ->  do! STOR arguments client serverCertificate
     //|"STOU" -> ()
     //|"STRU" -> ()
     |"SYST" -> do! async_writeln stream "215 Windows_NT"
@@ -192,7 +192,7 @@ let command(str1: string, client: FtpClient) = async {
          
 }
 
-let asyncServiceClient (ftpClient: FtpClient) = async {
+let asyncServiceClient (ftpClient: FtpClient) serverCertificate = async {
 
    do! async_writeln ftpClient.ControlStream "230 Login successful."
    
@@ -210,28 +210,18 @@ let asyncServiceClient (ftpClient: FtpClient) = async {
         do! async_writeln ftpClient.ControlStream "221 Goodbye." 
         clientConnected := false
        else
-        do! command(cmd,ftpClient)
+        do! command (cmd,ftpClient) serverCertificate
     
 }
 
 open Suave.Data
-open Config
+//open Config
 
-let db_authentication_provider (client: FtpClient) : (FtpClient) Option= 
-    let query _ = 
-        let tx = sql cn
-        tx { 
-            let! p = tx.Query "SELECT username,password,homedir FROM User WHERE username=%s and password=%s" client.User (encrypt(client.Password))
-            return p }
-    
-    let result = query ()
-    match result with 
-    |Some(_,_,homedir) -> client.HomeDirectory <- homedir
-                          Some(client)
-    |None -> None
+(*
 
 
-let rec loop (client: FtpClient) =  async {
+*)
+let rec loop serverCertificate (client: FtpClient) =  async {
         
     let! cmd = readCommand(client.ControlStream)
 
@@ -255,21 +245,21 @@ let rec loop (client: FtpClient) =  async {
                 else
                     do! async_writeln client.ControlStream "504 Unknown AUTH type."
 
-               do!  loop client
+               do!  loop serverCertificate client 
     
     |"USER" ->  client.User <- parts.[1]
                 //TODO: look up home directory, or maybe later
                 do! async_writeln client.ControlStream "331 Please specify the password."
-                do! loop client
+                do! loop serverCertificate client 
                
     |"PASS" ->  client.Password <- parts.[1]
         
     |_ -> do! async_writeln client.ControlStream "530 Please login with USER and PASS."  
-          do!  loop client
+          do!  loop serverCertificate client 
 }
 
     
-let ftp_worker (client:TcpClient) = async {
+let ftp_worker serverCertificate authentication_provider (client:TcpClient) = async {
 
     let ftpClient = new FtpClient(client,client.GetStream())
 
@@ -285,12 +275,12 @@ let ftp_worker (client:TcpClient) = async {
 
     try
         while not(!authenticated) do
-            do! loop ftpClient
-            match db_authentication_provider ftpClient  with
+            do! loop serverCertificate ftpClient
+            match authentication_provider ftpClient  with
             |Some(_) -> authenticated := true
             |None -> do! async_writeln ftpClient.ControlStream "530 Invalid Password."
     
-        do! asyncServiceClient  ftpClient
+        do! asyncServiceClient  ftpClient serverCertificate
     finally
             killEx(ftpClient)
 
@@ -298,7 +288,9 @@ let ftp_worker (client:TcpClient) = async {
 
 open Suave.Tcp
 
-let ftp_server ipaddress = tcp_ip_server (ipaddress,21) ftp_worker (Suave.Combinator.cnst false)
+let ftp_server ipaddress serverCertificate authentication_provider = 
+    let worker = ftp_worker serverCertificate authentication_provider
+    tcp_ip_server (ipaddress,21) worker //(Suave.Combinator.cnst false)
 (*
 let ftp_servers bindings = 
     bindings
