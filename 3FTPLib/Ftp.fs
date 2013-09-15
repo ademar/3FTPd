@@ -225,7 +225,7 @@ let rec loop serverCertificate (client: FtpClient) =  async {
         
     let! cmd = readCommand(client.ControlStream)
 
-    Suave.Log.log "%s" cmd
+    Suave.Log.log "%s\n" cmd
         
     let parts = cmd.Split(' ') |> Array.map (fun (x:string) -> x.Trim())
 
@@ -257,11 +257,12 @@ let rec loop serverCertificate (client: FtpClient) =  async {
     |_ -> do! async_writeln client.ControlStream "530 Please login with USER and PASS."  
           do!  loop serverCertificate client 
 }
-
     
-let ftp_worker serverCertificate authentication_provider (client:TcpClient) = async {
+let ftp_worker (config:FtpConfig) (client:TcpClient) = async {
 
     let ftpClient = new FtpClient(client,client.GetStream())
+    
+    ftpClient.Config <- config
 
     ftpClient.ConnectionTime <- timer.ElapsedMilliseconds
     
@@ -275,12 +276,12 @@ let ftp_worker serverCertificate authentication_provider (client:TcpClient) = as
 
     try
         while not(!authenticated) do
-            do! loop serverCertificate ftpClient
-            match authentication_provider ftpClient  with
+            do! loop config.certificate ftpClient
+            match config.authentication_provider ftpClient  with
             |Some(_) -> authenticated := true
             |None -> do! async_writeln ftpClient.ControlStream "530 Invalid Password."
     
-        do! asyncServiceClient  ftpClient serverCertificate
+        do! asyncServiceClient  ftpClient config.certificate
     finally
             killEx(ftpClient)
 
@@ -288,13 +289,5 @@ let ftp_worker serverCertificate authentication_provider (client:TcpClient) = as
 
 open Suave.Tcp
 
-let ftp_server ipaddress serverCertificate authentication_provider = 
-    let worker = ftp_worker serverCertificate authentication_provider
-    tcp_ip_server (ipaddress,21) worker //(Suave.Combinator.cnst false)
-(*
-let ftp_servers bindings = 
-    bindings
-    |> Array.map(fun x -> tcp_ip_server (x,21) ftp_worker (Suave.Combinator.cnst false))
-    |> Async.Parallel
-    |> Async.Ignore
-*)
+let ftp_server config = 
+    tcp_ip_server (config.ipaddress,21) (ftp_worker config)

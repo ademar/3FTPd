@@ -47,17 +47,17 @@ type Direction = Up | Down
 let on_data_channel (client:FtpClient) (operation:Stream -> unit) (d:Direction) (serverCertificate)= async {
 
     if(client.Passive) then
-        log "client is passive, waiting on %d port" client.Port
+        log "client is passive, waiting on %d port\n" client.Port
         
         client.DataClient <- client.TcpListener.AcceptTcpClient()
         client.DataStream <- client.DataClient.GetStream()
-        log "client connected" 
+        log "client connected\n" 
 
     let stream = client.ControlStream
     
     if(client.DataStream<>null) then
         
-        log "DataConnection is not null, writing" 
+        log "DataConnection is not null, writing\n" 
         
         if(client.Ssl) then
         
@@ -83,7 +83,7 @@ let on_data_channel (client:FtpClient) (operation:Stream -> unit) (d:Direction) 
             dataCon.Flush()
             dataCon.Close()
             client.DataClient.Close()
-            
+            //TODO: release data port here
             log "operation is done" 
             
             do! async_writeln stream "226 Transfer complete."
@@ -148,17 +148,22 @@ let MDTM (path:string) (client: FtpClient) = async {
 }
 
 let local_ip (client: FtpClient) = (client.TcpClient.Client.LocalEndPoint :?> IPEndPoint).Address
-
    
 let rec PASV (client: FtpClient) retries =  async {
     
     try 
-        let port = obtain_port ()
+        let port = Ports.obtain_port client.Config.low_port client.Config.high_port
         
         log "waiting on port %d" port
         
         client.Port <- port
+        
+        
         let local_ip = local_ip client
+        
+        //instead of waiting on local_ip i should listen on the same ip of the client
+        //well thats what the function local_ip does .. it extracts it from the connection
+        
         let tcpDataConnectionListener = new TcpListener(local_ip,client.Port)
         tcpDataConnectionListener.Start()
         client.TcpListener <- tcpDataConnectionListener
@@ -171,7 +176,7 @@ let rec PASV (client: FtpClient) retries =  async {
 }
 
 let EPSV (client: FtpClient) =  async {
-    let port = obtain_port ()
+    let port = Ports.obtain_port client.Config.low_port client.Config.high_port
     log "waiting on port %d" port
     client.Port <- port
     

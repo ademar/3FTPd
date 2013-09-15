@@ -61,8 +61,13 @@ let start (site:Site) serverCertificate authentication_provider =
     
     log "starting site:%s" site.name
     let cancellationSource = new CancellationTokenSource()
-     
-    Async.Start(ftp_server site.ipaddress serverCertificate authentication_provider, cancellationSource.Token)
+    let config = { 
+        ipaddress = site.ipaddress; 
+        certificate = serverCertificate; 
+        authentication_provider = authentication_provider;
+        low_port = 700;
+        high_port = 8000 } 
+    Async.Start(ftp_server config, cancellationSource.Token)
     
     runningSites <- Map.add site.id { site = site; cancellationSource =  cancellationSource} runningSites
 

@@ -19,7 +19,7 @@ open Suave.Log
 
 let execute cmd args =
 
-    log  "executing: %s %s" cmd args 
+    log  "executing: %s %s\n" cmd args 
 
     let proc = new Process();
 
@@ -35,7 +35,7 @@ let execute cmd args =
     
 let execute_as (username,password:string) cmd args working_dir = 
     try
-        log "executing: %s %s" cmd args
+        log "executing: %s %s\n" cmd args
         
         use securePassword = new Security.SecureString()
         Array.iter (securePassword.AppendChar) (password.ToCharArray())
@@ -58,7 +58,7 @@ let execute_as (username,password:string) cmd args working_dir =
                
         proc//.Id
      with
-     | x -> log "execute_as failed with: %A" x
+     | x -> log "execute_as failed with: %A\n" x
             null
      
 
@@ -84,10 +84,6 @@ let parseExtendedPort(s: string) =
      (ip,port)
     with
     |_ -> failwith "alabao"
-
-let rnd = new Random(DateTime.Now.Millisecond)
-
-let random_port _ = rnd.Next(500,65235)
 
 let posix = ((int) Environment.OSVersion.Platform = 128);
 let root = (WindowsIdentity.GetCurrent().Token = IntPtr.Zero);
@@ -163,12 +159,25 @@ let serialize obj =
 let deserialize<'a> str (typeof: Type) : 'a= 
     let serializer = new XmlSerializer(typeof)
     let r = new StringReader(str)
-    serializer.Deserialize(r) :?> 'a           
+    serializer.Deserialize(r) :?> 'a  
     
-type FtpClient(tcpclient: TcpClient, stream:Stream) = 
+open System.Security.Cryptography.X509Certificates;
+open System.Net.Security
+             
+type FtpConfig = {
+    ipaddress : string;
+    certificate : X509Certificate2;
+    authentication_provider : FtpClient -> FtpClient option;
+    low_port : int;
+    high_port : int;
+    }
+    
+and FtpClient(tcpclient: TcpClient, stream:Stream) = 
 
     let mutable port = 0
     let mutable passive = false
+    
+    let mutable config = { ipaddress = "127.0.0.1";certificate = null; authentication_provider = (fun x -> Some x); low_port = 500; high_port = 5000 }
     
     let mutable controlStream:Stream = stream
     let mutable dataStream:Stream = null
@@ -189,6 +198,10 @@ type FtpClient(tcpclient: TcpClient, stream:Stream) =
     let mutable cancellationTokenSource:CancellationTokenSource = null;
     
     member p.Id = id
+    
+    member p.Config 
+        with get() = config
+        and  set v = config <- v
         
     member p.DataStream 
         with get() = dataStream
@@ -269,7 +282,7 @@ let impersonate (username:string) cmd =
         use wic = nonroot.Impersonate();
         cmd ()
     with
-    |x -> log "impersonate fails: %A" x        
+    |x -> log "impersonate fails: %A\n" x        
     
 let readTillEOF (st:Stream) =
     let str = new StreamReader(st)
@@ -277,7 +290,7 @@ let readTillEOF (st:Stream) =
 
 let readLine(stream) = 
     let cmd = readTillEOF(stream)
-    log "received : %s" cmd
+    log "received : %s\n" cmd
     cmd    
     
 let dump e p =
@@ -292,7 +305,7 @@ let lift2 f = fun b c -> fun a -> f (b a) (c a)
 let combine (p1:string) (p2:string) =
     let p2 = if p2.StartsWith("/") then p2.Substring(1) else p2
     let path = Path.Combine(p1,p2)
-    printfn "HERE:   %s##%s##%s" p1 p2 (path.ToString())
+    //printfn "HERE:   %s##%s##%s" p1 p2 (path.ToString())
     path.ToString()
 
 let dir_exists arg (client:FtpClient) = 
@@ -374,33 +387,14 @@ let kill id =
             if not (client.TcpClient = null) then Suave.Tcp.close client.TcpClient
         |false,_ -> ()
         removeClient id
-        Suave.Log.log "killed." 
+        Suave.Log.log "killed.\n" 
 
-    with _ -> Suave.Log.log "killing failed"
+    with _ -> Suave.Log.log "killing failed\n"
 
-open System.Threading
 
-let ports_lock = new Semaphore(1,1)
-let mutable ports :int Set = Set.empty
-
-let release_port port = 
-    ports_lock.WaitOne() |> ignore
-    ports <- Set.remove port ports
-    ports_lock.Release() |> ignore
-    
-let rec iter_ports _ = 
-    let port = random_port ()
-    if Set.contains port ports then iter_ports()
-    else 
-        ports <- Set.add port ports
-        port
-
-let obtain_port _ =
-    ports_lock.WaitOne() |> ignore
-    let port = iter_ports ()
-    ports_lock.Release() |> ignore
-    port
 
 let killEx (ftpClient:FtpClient) = 
     kill ftpClient.Id
-    release_port ftpClient.Port
+    //release_port ftpClient.Port
+    //dont make much sense to release this here
+    //since data connections are closed elsewhere
